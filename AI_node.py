@@ -58,17 +58,17 @@ class Node():
 
 class CurrentState():
 
-    def __init__(self, num_cheeses, array,curr_location,cheeses):
+    def __init__(self, num_cheeses,curr_location,cheeses):  # i removed array from here bc i dont think we need it for current state
         self.num_cheeses=num_cheeses
-        self.array=array
+        #self.array=array
         self.curr_location=curr_location
         self.cheeses=cheeses
 
     def get_num_cheeses(self):
         return num_cheeses
 
-    def get_array(self):
-        return self.array
+    #def get_array(self):
+        #return self.array
 
     def get_curr_location(self):
         return self.curr_location
@@ -79,8 +79,8 @@ class CurrentState():
     def set_num_cheeses(self, n):
         self.north= n
 
-    def set_array(self, n):
-        self.array= n
+    #def set_array(self, n):
+        #self.array= n
 
     def set_curr_location(self, n):
         self.curr_location= n
@@ -112,15 +112,32 @@ def transition(current_state, direction):
     last_num_cheese=current_state.get_num_cheese()
     last_cheeses=current_state.get_cheeses()
     last_loc=current_state.get_curr_location()
+    lst = list(last_loc)
 
     if direction=="N":
-        lst = list(last_loc)
         lst[0] = lst[0]-1
 
-        if array[lst[0]][lst[1]] == "%":
-            return None
-            ##return current_state
+
+    if direction=="S":
+        lst[0] = lst[0]+1
+
+
+    if direction=="E":
+        lst[0] = lst[1]+1
+
+
+     if direction=="W":
+        lst[0] = lst[1]-1
+
+
+    if array[lst[0]][lst[1]] == "%":
+        return None
+        ##return current_state
+        
+
         new_loc = tuple(lst)
+
+
         if array[lst[0]][lst[1]] == ".":
             new_num_cheese = copy.deepcopy(last_num_cheese)
             new_num_cheese -=1
@@ -129,26 +146,8 @@ def transition(current_state, direction):
                 if new_cheeses[i] == new_loc:
                     new_cheeses.pop(i)
 
-
-
-        new_loc = tuple(lst)
-
-    if direction=="S":
-        lst = list(last_loc)
-        lst[0] = lst[0]+1
-        new_loc = tuple(lst)
-
-    if direction=="E":
-        lst = list(last_loc)
-        lst[0] = lst[1]+1
-        new_loc = tuple(lst)
-
-    if direction=="W":
-        lst = list(last_loc)
-        lst[0] = lst[1]-1
-        new_loc = tuple(lst)
-
-
+    new_state = CurrentState(new_num_cheese, new_loc, new_cheeses)
+    return new_state
 
 
 def make_first_node(array):
