@@ -243,7 +243,63 @@ def DFS(root_node, array):
     print(goal_found)
     
 
+def calc_dist(state):
+    dist_from_cheeses=[]
+    for i in state.get_cheeses():
+        mnh_dist=abs(state.get_curr_location[0]-i[0])+abs(state.get_curr_location[1]-i[1])
+        dist_from_cheeses.append(mnh_dist)
+    return mnh_dist
+
+
+def GBFS(root_node, array):
+
+
+    expanded=[]
+    front = []
+    all_mhnd={}
+    goal_found=False
+    front.append(root_node)
+
+    while goal_found==False:
+        print (len(expanded))
+
+        if len(expanded)==0:
+            node2expand=front[0]
         
+        else:
+            
+            for i in front:
+                
+                state=i.get_state()
+                all_mhnd[min(calc_dist(state))]=i
+            node2expand=all_mhnd[min(all_mhnd.values())]
+
+        north= transition(node2expand.get_state(),"N", array)
+        south= transition(node2expand.get_state(),"S", array)
+        east= transition(node2expand.get_state(),"E", array)
+        west= transition(node2expand.get_state(),"W", array)
+
+        node_north = Node(north, root_node)
+        node_south = Node(south, root_node)
+        node_east = Node( east, root_node)
+        node_west = Node(west, root_node)
+
+        if node_west not in expanded:
+            front.append(node_west)
+
+        if node_east not in expanded:
+            front.append(node_east)
+
+        if node_south not in expanded:
+            front.append(node_south)
+
+        if node_north not in expanded:
+            front.append(node_north)
+
+        goal_found = north.is_goal() or south.is_goal() or east.is_goal or west.is_goal()
+
+
+         
 
 
 if __name__=="__main__":
@@ -254,7 +310,8 @@ if __name__=="__main__":
     args=parser.parse_args()
     D_array = read_file(args.file)
 
-    DFS(make_first_node(D_array), D_array)
+    #DFS(make_first_node(D_array))
+    GBFS(make_first_node(D_array), D_array)
     # x = make_first_node(D_array)
     # s = x.get_state()
 
