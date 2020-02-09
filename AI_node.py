@@ -122,7 +122,8 @@ def count_cheeses(array):
 
 def check_goal_state(state):
     num_cheese = state.get_num_cheeses()
-    if num_cheese ==0:
+    cheese_left = state.get_cheeses()
+    if num_cheese ==0 and cheese_left == []:
         return True
     else:
         return False
