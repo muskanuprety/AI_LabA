@@ -1,6 +1,6 @@
 import argparse
 from collections import deque 
-
+import copy
 
 
 class Node():
@@ -44,27 +44,17 @@ class Node():
 
     def set_state(self,state):
         self.state=state
-
-
-
-
-
-
-    def add_node(self, state):
-        
-        
-        self.add_helper(data, self.root)
             
         
 
 class CurrentState():
 
-    def __init__(self, num_cheeses,curr_location,cheeses, path):  # i removed array from here bc i dont think we need it for current state
+    def __init__(self, num_cheeses,curr_location,cheeses):  # i removed array from here bc i dont think we need it for current state
         self.num_cheeses=num_cheeses
         #self.array=array
         self.curr_location=curr_location
         self.cheeses=cheeses
-        self.path = path
+        #self.path = path
 
     def get_num_cheeses(self):
         return self.num_cheeses
@@ -97,10 +87,18 @@ class CurrentState():
         self.cheeses= n
 
     def is_goal(self):
-        if self.num_cheeses ==0:
+        if self.num_cheeses == 0:
             return True
         else:
             return False
+
+    def compare_state(self, statex):
+
+        if self.get_num_cheeses() == statex.get_num_cheeses() and self.get_curr_location() == statex.get_curr_location() and self.get_cheeses() == statex.get_cheeses():
+            return True
+        else:
+            return False
+
 
 def read_file(filename):
     file=open(filename,"r")
@@ -122,15 +120,15 @@ def count_cheeses(array):
                 cheeses.append((i,j))
     return count,cheeses
 
-# def check_goal_state(state):
-#     num_cheese = state.get_num_cheese
-#     if num_cheese ==0:
-#         return True
-#     else:
-#         return False
+def check_goal_state(state):
+    num_cheese = state.get_num_cheeses()
+    if num_cheese ==0:
+        return True
+    else:
+        return False
 
-def transition(current_state, direction):
-    last_num_cheese=current_state.get_num_cheese()
+def transition(current_state, direction, array):
+    last_num_cheese=current_state.get_num_cheeses()
     last_cheeses=current_state.get_cheeses()
     last_loc=current_state.get_curr_location()
     lst = list(last_loc)
@@ -147,25 +145,27 @@ def transition(current_state, direction):
         lst[0] = lst[1]+1
 
 
-     if direction=="W":
+    if direction=="W":
         lst[0] = lst[1]-1
 
 
     if array[lst[0]][lst[1]] == "%":
-        return None
+
+        return current_state
         ##return current_state
         
 
-        new_loc = tuple(lst)
+    new_loc = tuple(lst)
 
+    new_num_cheese= copy.deepcopy(last_num_cheese)
+    new_cheeses= copy.deepcopy(last_cheeses)
 
-        if array[lst[0]][lst[1]] == ".":
-            new_num_cheese = copy.deepcopy(last_num_cheese)
-            new_num_cheese -=1
-            new_cheeses = copy.deepcopy(last_cheeses)
-            for i in range(len(new_cheeses)):
-                if new_cheeses[i] == new_loc:
-                    new_cheeses.pop(i)
+    if array[lst[0]][lst[1]] == ".":
+        array[lst[0]][lst[1]] = " "
+        new_num_cheese -= 1
+        for i in range(len(new_cheeses)):
+            if new_cheeses[i] == new_loc:
+                new_cheeses.pop(i)
 
     new_state = CurrentState(new_num_cheese, new_loc, new_cheeses)
     return new_state
@@ -180,48 +180,67 @@ def make_first_node(array):
                     
                 loc=(i,j)
     x,y=count_cheeses(array)
-    root_state=CurrentState(x,array,loc,y)
+    root_state=CurrentState(x,loc,y)
     root_node= Node(root_state)
     return root_node
 
+def xyz(liss, state):
+    answer = False
+    for i in liss:
+        if state.compare_state(i) == True:
+                answer = True
+    return answer
 
 
-def DFS(root_node):
+
+def DFS(root_node, array):
     expanded=[]
     front = []
     
     goal_found=False
-    front.append(root_node)
+    front.append(root_node.get_state())
+
     while goal_found==False:
+        #print("aaoia")
 
-        north= transition(front[len(front)-1].get_state(),"N")
-        south= transition(front[len(front)-1].get_state(),"S")
-        east= transition(front[len(front)-1].get_state(),"E")
-        west= transition(front[len(front)-1].get_state(),"W")
+        if xyz(expanded, front[len(front)-1]):
+            front.pop()
+        else:
 
-        goal_found = north.is_goal() or south.is_goal() or east.is_goal or west.is_goal()
+            expanded.append(front[len(front)-1])
 
-        node_north = Node(north, root_node)
-        node_south = Node(south, root_node)
-        node_east = Node( east, root_node)
-        node_west = Node(west, root_node)
+            north= transition(front[len(front)-1],"N", array)
+            south= transition(front[len(front)-1],"S", array)
+            east= transition(front[len(front)-1],"E", array)
+            west= transition(front[len(front)-1],"W", array)
 
-        if node_west not in expanded and node_west != None:
-            front.append(node_west)
+            front.pop()
 
-        if node_east not in expanded and node_east != None:
-            front.append(node_east)
+            x3 = check_goal_state(east)
+            x4 = check_goal_state(west)
+            x1 = check_goal_state(north)
+            x2 = check_goal_state(south)
 
-        if node_south not in expanded and node_south != None:
-            front.append(node_south)
+            goal_found = x1 or x2 or x3 or x4
+        #goal_found = north.is_goal() or south.is_goal() or east.is_goal or west.is_goal()
 
-        if node_north not in expanded and node_north != None:
-            front.append(node_north)
+            # node_north = Node(north,front[len(front)-1])
+            # node_south = Node(south, front[len(front)-1])
+            # node_east = Node( east, front[len(front)-1])
+            # node_west = Node(west, front[len(front)-1])
+
+            front.append(north)
+            front.append(south)
+            front.append(east)
+            front.append(west)
+        
 
 
-        expanded.append(front.pop())
-
-    return True 
+        print(len(expanded))
+        print(len(front))
+    
+    print(goal_found)
+    
 
         
 
@@ -234,9 +253,13 @@ if __name__=="__main__":
     args=parser.parse_args()
     D_array = read_file(args.file)
 
-    DFS(make_first_node(D_array))
+    DFS(make_first_node(D_array), D_array)
+    # x = make_first_node(D_array)
+    # s = x.get_state()
 
-
+    # print(s.get_num_cheeses())
+    # print(s.get_curr_location())
+    # print(s.get_cheeses())
 
 
 
