@@ -11,6 +11,7 @@ class Node():
         self.east=None
         self.west=None
         self.south=None
+        self.path=[]
         
     def get_parent(self):
         return self.parent
@@ -44,8 +45,17 @@ class Node():
 
     def set_state(self,state):
         self.state=state
+    def set_path(self,path):
+        self.path.append(path)
             
-        
+    def compare_state(self, statex):
+
+        if self.get_state().get_num_cheeses() == statex.get_num_cheeses() and self.get_state().get_curr_location() == statex.get_curr_location() and self.get_state().get_cheeses() == statex.get_cheeses():
+            return True
+        else:
+            return False
+    def get_path(self):
+        return self.path
 
 class CurrentState():
 
@@ -92,12 +102,14 @@ class CurrentState():
         else:
             return False
 
-    def compare_state(self, statex):
+    # def compare_state(self, statex):
 
-        if self.get_num_cheeses() == statex.get_num_cheeses() and self.get_curr_location() == statex.get_curr_location() and self.get_cheeses() == statex.get_cheeses():
-            return True
-        else:
-            return False
+    #     if self.get_num_cheeses() == statex.get_num_cheeses() and self.get_curr_location() == statex.get_curr_location() and self.get_cheeses() == statex.get_cheeses():
+    #         return True
+    #     else:
+    #         return False
+
+    
 
 
 def read_file(filename):
@@ -123,41 +135,38 @@ def count_cheeses(array):
 def check_goal_state(state):
     num_cheese = state.get_num_cheeses()
     cheese_left = state.get_cheeses()
-    if num_cheese ==0 and cheese_left == []:
+    if num_cheese == 0 and cheese_left == []:
         return True
     else:
         return False
 
 def transition(current_state, direction, array):
+    
     last_num_cheese=current_state.get_num_cheeses()
     last_cheeses=current_state.get_cheeses()
-    last_loc=current_state.get_curr_location()
-    lst = list(last_loc)
-
+    lst=list(current_state.get_curr_location())
+    
     if direction=="N":
         lst[0] = lst[0]-1
-
 
     if direction=="S":
         lst[0] = lst[0]+1
 
-
     if direction=="E":
-        lst[0] = lst[1]+1
-
+        lst[1] = lst[1]+1
 
     if direction=="W":
-        lst[0] = lst[1]-1
-
-
-    if array[lst[0]][lst[1]] == "%":
-
-        return current_state
-        ##return current_state
-        
+        lst[1] = lst[1]-1
 
     new_loc = tuple(lst)
 
+    if array[lst[0]][lst[1]] == "%":
+
+        return current_state 
+           
+
+    
+    
     new_num_cheese= copy.deepcopy(last_num_cheese)
     new_cheeses= copy.deepcopy(last_cheeses)
 
@@ -169,6 +178,7 @@ def transition(current_state, direction, array):
                 new_cheeses.pop(i)
 
     new_state = CurrentState(new_num_cheese, new_loc, new_cheeses)
+    
     return new_state
 
 
@@ -185,10 +195,10 @@ def make_first_node(array):
     root_node= Node(root_state)
     return root_node
 
-def xyz(liss, state):
+def xyz(liss, node):
     answer = False
     for i in liss:
-        if state.compare_state(i) == True:
+        if node.compare_state(i.get_state()) == True and i.get_parent()==node.get_parent():
                 answer = True
     return answer
 
@@ -199,23 +209,27 @@ def DFS(root_node, array):
     front = []
     
     goal_found=False
-    front.append(root_node.get_state())
+    front.append(root_node)
 
     while goal_found==False:
         #print("aaoia")
+        node2expand=front.pop()
+        loc=node2expand.get_state().get_curr_location()
+        print(loc)
+        print(array[loc[0]][loc[1]])
 
-        if xyz(expanded, front[len(front)-1]):
-            front.pop()
-        else:
+        if xyz(expanded, node2expand)==False:
+            
+        
 
-            expanded.append(front[len(front)-1])
+            expanded.append(node2expand)
 
-            north= transition(front[len(front)-1],"N", array)
-            south= transition(front[len(front)-1],"S", array)
-            east= transition(front[len(front)-1],"E", array)
-            west= transition(front[len(front)-1],"W", array)
+            north= transition(node2expand.get_state(),"N", array)
+            south= transition(node2expand.get_state(),"S", array)
+            east= transition(node2expand.get_state(),"E", array)
+            west= transition(node2expand.get_state(),"W", array)
 
-            front.pop()
+            
 
             x3 = check_goal_state(east)
             x4 = check_goal_state(west)
@@ -224,16 +238,25 @@ def DFS(root_node, array):
 
             goal_found = x1 or x2 or x3 or x4
         #goal_found = north.is_goal() or south.is_goal() or east.is_goal or west.is_goal()
+            node_path=node2expand.get_path()
+            
+            node_north = Node(north,node2expand)
+            node_north.set_path(node_path.append("N"))
+            
+            node_south = Node(south, node2expand)
+            node_north.set_path(node_path.append("S"))
 
-            # node_north = Node(north,front[len(front)-1])
-            # node_south = Node(south, front[len(front)-1])
-            # node_east = Node( east, front[len(front)-1])
-            # node_west = Node(west, front[len(front)-1])
 
-            front.append(north)
-            front.append(south)
-            front.append(east)
-            front.append(west)
+            node_east = Node( east, node2expand)
+            node_north.set_path(node_path.append("E"))
+
+            node_west = Node(west, node2expand)
+            node_north.set_path(node_path.append("W"))
+
+            front.append(node_north)
+            front.append(node_south)
+            front.append(node_east)
+            front.append(node_west)
         
 
 
@@ -243,13 +266,64 @@ def DFS(root_node, array):
     print(goal_found)
     
 
+
 def calc_dist(state):
     dist_from_cheeses=[]
     for i in state.get_cheeses():
-        mnh_dist=abs(state.get_curr_location[0]-i[0])+abs(state.get_curr_location[1]-i[1])
+        mnh_dist=abs(state.get_curr_location()[0]-i[0])+abs(state.get_curr_location()[1]-i[1])
         dist_from_cheeses.append(mnh_dist)
-    return mnh_dist
+    return dist_from_cheeses
 
+
+def BFS(root_node, array):
+    expanded=[]
+    front = []
+    
+    goal_found=False
+    front.append(root_node)
+
+    while goal_found==False:
+        #print("aaoia")
+        node2expand=front.pop(0)
+
+        if xyz(expanded, node2expand)==False:
+            
+        
+
+            expanded.append(node2expand)
+
+            north= transition(node2expand.get_state(),"N", array)
+            south= transition(node2expand.get_state(),"S", array)
+            east= transition(node2expand.get_state(),"E", array)
+            west= transition(node2expand.get_state(),"W", array)
+
+            
+
+            x3 = check_goal_state(east)
+            x4 = check_goal_state(west)
+            x1 = check_goal_state(north)
+            x2 = check_goal_state(south)
+
+            goal_found = x1 or x2 or x3 or x4
+        #goal_found = north.is_goal() or south.is_goal() or east.is_goal or west.is_goal()
+
+            node_north = Node(north,node2expand)
+            node_south = Node(south, node2expand)
+            node_east = Node( east, node2expand)
+            node_west = Node(west, node2expand)
+
+            front.append(node_north)
+            front.append(node_south)
+            front.append(node_east)
+            front.append(node_west)
+        
+
+
+        print(len(expanded))
+        print(len(front))
+    
+    print(goal_found)
+    
 
 def GBFS(root_node, array):
 
@@ -258,10 +332,12 @@ def GBFS(root_node, array):
     front = []
     all_mhnd={}
     goal_found=False
+
     front.append(root_node)
 
     while goal_found==False:
-        print (len(expanded))
+        
+        print (len(front))
 
         if len(expanded)==0:
             node2expand=front[0]
@@ -270,33 +346,39 @@ def GBFS(root_node, array):
             
             for i in front:
                 
-                state=i.get_state()
-                all_mhnd[min(calc_dist(state))]=i
-            node2expand=all_mhnd[min(all_mhnd.values())]
+                
+                all_mhnd[min(calc_dist(i.get_state()))]=i
+            node2expand=all_mhnd[min(all_mhnd.keys())]
 
-        north= transition(node2expand.get_state(),"N", array)
-        south= transition(node2expand.get_state(),"S", array)
-        east= transition(node2expand.get_state(),"E", array)
-        west= transition(node2expand.get_state(),"W", array)
+        if (xyz(expanded, node2expand)==False):
 
-        node_north = Node(north, root_node)
-        node_south = Node(south, root_node)
-        node_east = Node( east, root_node)
-        node_west = Node(west, root_node)
+            expanded.append(node2expand)
 
-        if node_west not in expanded:
-            front.append(node_west)
 
-        if node_east not in expanded:
-            front.append(node_east)
+            north= transition(node2expand.get_state(),"N", array)
+            south= transition(node2expand.get_state(),"S", array)
+            east= transition(node2expand.get_state(),"E", array)
+            west= transition(node2expand.get_state(),"W", array)
 
-        if node_south not in expanded:
-            front.append(node_south)
+            node_north = Node(north, root_node)
+            node_south = Node(south, root_node)
+            node_east = Node( east, root_node)
+            node_west = Node(west, root_node)
 
-        if node_north not in expanded:
-            front.append(node_north)
+            front.append(north)
+            front.append(south)
+            front.append(east)
+            front.append(west)
 
-        goal_found = north.is_goal() or south.is_goal() or east.is_goal or west.is_goal()
+
+
+
+        
+
+            front.remove(node2expand)
+
+
+            goal_found = check_goal_state(north) or check_goal_state(north) or check_goal_state(north) or check_goal_state(north)
 
 
          
@@ -310,8 +392,11 @@ if __name__=="__main__":
     args=parser.parse_args()
     D_array = read_file(args.file)
 
-    #DFS(make_first_node(D_array))
-    GBFS(make_first_node(D_array), D_array)
+    # x =transition(make_first_node(D_array).get_state(), "E", D_array)
+    # print(x.get_curr_location())
+
+    DFS(make_first_node(D_array),D_array)
+    # GBFS(make_first_node(D_array), D_array)
     # x = make_first_node(D_array)
     # s = x.get_state()
 
