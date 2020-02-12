@@ -1,17 +1,19 @@
 import argparse
 from collections import deque 
 import copy
+import heapq
 
 
 class Node():
-    def __init__(self, state= None, parent=None):
+    def __init__(self, state, parent, path=None, mnh_dist=None):
         self.state= state
         self.parent= parent
         self.north=None
         self.east=None
         self.west=None
         self.south=None
-        self.path= []
+        self.path= path
+        self.mnh_dist=mnh_dist
         
     def get_parent(self):
         return self.parent
@@ -27,6 +29,9 @@ class Node():
 
     def get_west(self):
         return self.west
+
+    def get_path(self):
+        return self.path
     
     def set_north(self, n):
         self.north= n
@@ -47,7 +52,7 @@ class Node():
         self.state=state
 
     def set_path(self,n):
-        self.path = n
+        self.path.append(n)
             
     def compare_state(self, statex):
 
@@ -58,6 +63,9 @@ class Node():
     
     def get_path(self):
         return self.path
+
+    def __lt__(self, other):
+        return self.mnh_dist < other.mnh_dist
 
 class CurrentState():
 
@@ -71,11 +79,6 @@ class CurrentState():
     def get_num_cheeses(self):
         return self.num_cheeses
 
-    def get_path(self):
-        return self.path
-
-    def set_path(self, n):
-        self.path = n
 
     #def get_array(self):
         #return self.array
@@ -192,7 +195,8 @@ def make_first_node(array):
                 loc=(i,j)
     x,y=count_cheeses(array)
     root_state=CurrentState(x,loc,y)
-    root_node= Node(root_state)
+    lista=["start"]
+    root_node= Node(root_state,None,lista)
     
     return root_node
 
@@ -226,25 +230,38 @@ def DFS(root_node, array):
             goal_found = x1 or x2 or x3 or x4
 
             node_path= node2expand.get_path()
-            
-            node_north = Node(north,node2expand)
-            print(node_north.get_path())
-            new_path_north = node_path.append("N")
-            node_north.set_path(new_path_north)
-            print(node_north.get_path())
 
-            new_path_north = node_path.append("N")
-            node_north.set_path(new_path_north)
+            print(node_path)
+          
+            # print(node_north.get_path())
+            new_path_north = copy.deepcopy(node_path)
+            new_path_north.append("N")
+            node_north = Node(north,node2expand, new_path_north)
             
-            node_south.set_path(node_path.append("S"))
-            node_east = Node( east, node2expand)
-            node_east.set_path(node_path.append("E"))
-            node_west = Node(west, node2expand)
-            node_west.set_path(node_path.append("W"))
+            
+
+            new_path_south = copy.deepcopy(node_path)
+            new_path_south = node_path.append("S")
+            node_south = Node(south, node2expand, new_path_south)
+            
+            
+
+            new_path_east = copy.deepcopy(node_path)
+            new_path_east.append("E")
+            node_east = Node(east, node2expand, new_path_east)
+            
+            new_path_west = copy.deepcopy(node_path)
+            new_path_west = node_path.append("W")
+            node_west = Node(west, node2expand, new_path_west)
+            
+            
+
+
             front.append(node_north)
             front.append(node_south)
             front.append(node_east)
             front.append(node_west)
+            
             if x3:
                 gg = node_east
             if x4:
@@ -253,9 +270,9 @@ def DFS(root_node, array):
                 gg = node_north
             if x2:
                 gg = node_south
-    print(gg.get_path())
+    # print(gg.get_path())
     
-    print(goal_found)
+    # print(goal_found)
     
 # node_west.set_path(node_path.append("W"))
 
@@ -306,59 +323,42 @@ def GBFS(root_node, array):
 
     expanded=[]
     front = []
-    all_mhnd={}
+    
     goal_found=False
 
     front.append(root_node)
 
     while goal_found==False:
-        
-        print (len(front))
+        # print (len(front))
+        # for i in front:
+        #     mina=min(calc_dist(i.get_state()))
+        #     next_node = PQNode(mina, i)
+        #     heapq.heappush(front,  next_node)
 
-        if len(front)==1:
-            node2expand=front[0]
-        
-        else:
-            
-            for i in front:
-                
-                
-                all_mhnd[i]=min(calc_dist(i.get_state()))
-                min_value=min(all_mhnd.values())
-            node2expand=all_mhnd.values().index(min_value)
+        node2expand = heapq.heappop(front)
 
         loc=node2expand.get_state().get_curr_location()
         print(loc)
         print(array[loc[0]][loc[1]])
 
-        if (xyz(expanded, node2expand)==False):
-
+        if (already_expanded(expanded, node2expand)==False):
             expanded.append(node2expand)
-
-
             north= transition(node2expand.get_state(),"N", array)
             south= transition(node2expand.get_state(),"S", array)
             east= transition(node2expand.get_state(),"E", array)
             west= transition(node2expand.get_state(),"W", array)
+            
+            node_north = Node(north, root_node,None, calc_dist(north))
+            node_south = Node(south, root_node, None, calc_dist(south))
+            node_east = Node( east, root_node, None,  calc_dist(east))
+            node_west = Node(west, root_node, None, calc_dist(west))
+            
+            heapq.heappush(front, node_north)
+            heapq.heappush(front, node_south)
+            heapq.heappush(front,node_east)
+            heapq.heappush(front,node_west)
 
-            node_north = Node(north, root_node)
-            node_south = Node(south, root_node)
-            node_east = Node( east, root_node)
-            node_west = Node(west, root_node)
-
-            front.append(node_north)
-            front.append(node_south)
-            front.append(node_east)
-            front.append(node_west)
-
-
-
-
-        
-
-            front.remove(node2expand)
-
-
+            
             goal_found = check_goal_state(north) or check_goal_state(north) or check_goal_state(north) or check_goal_state(north)
 
 
@@ -376,8 +376,8 @@ if __name__=="__main__":
     # x =transition(make_first_node(D_array).get_state(), "E", D_array)
     # print(x.get_curr_location())
 
-    DFS(make_first_node(D_array),D_array)
-    # GBFS(make_first_node(D_array), D_array)
+    # BFS(make_first_node(D_array),D_array)
+    GBFS(make_first_node(D_array), D_array)
     # x = make_first_node(D_array)
     # s = x.get_state()
 
