@@ -3,7 +3,6 @@ from collections import deque
 import copy
 import heapq
 
-
 class Node():
     def __init__(self, state, parent, path=None, mnh_dist=None):
         self.state= state
@@ -101,8 +100,6 @@ class CurrentState():
             return True
         else:
             return False
-    
-
 
 def read_file(filename):
     file=open(filename,"r")
@@ -172,7 +169,6 @@ def transition(current_state, direction):
     new_state = CurrentState(new_num_cheese, new_loc, new_cheeses, new_array)
     
     return new_state
-
 
 def make_first_node(array):
 
@@ -254,16 +250,19 @@ def DFS(root_node, array):
                 gg = node_south
     solved_maze = copy.deepcopy(array)
     right_path = gg.get_path()
+    right_path.pop(0)
     for i in right_path:
         solved_maze[i[0]][i[1]] = "#"
     x = ""
+
     for i in solved_maze:
         for j in i:
             x = x + j
         x = x+'\n'
+    print('Depth-First Search Solution:')
     print(x)
-    print(len(right_path))
-
+    print("Cost of Solution (steps from initial to goal state): ",len(right_path))
+    print("Number of nodes expanded: ", len(expanded))
 
 def BFS(root_node, array):
     expanded=[]
@@ -312,6 +311,7 @@ def BFS(root_node, array):
                 gg = node_south
     solved_maze = copy.deepcopy(array)
     right_path = gg.get_path()
+    right_path.pop(0)
     for i in right_path:
         solved_maze[i[0]][i[1]] = "#"
     x = ""
@@ -319,9 +319,10 @@ def BFS(root_node, array):
         for j in i:
             x = x + j
         x = x+'\n'
+    print('Breadth-First Search Solution:')
     print(x)
-    print(len(right_path))
-
+    print("Cost of Solution (steps from initial to goal state): ",len(right_path))
+    print("Number of nodes expanded: ", len(expanded))
 
 def GBFS(root_node, array):
     expanded=[]
@@ -371,6 +372,7 @@ def GBFS(root_node, array):
                 gg = node_south
     solved_maze = copy.deepcopy(array)
     right_path = gg.get_path()
+    right_path.pop(0)
     for i in right_path:
         solved_maze[i[0]][i[1]] = "#"
     x = ""
@@ -378,9 +380,10 @@ def GBFS(root_node, array):
         for j in i:
             x = x + j
         x = x+'\n'
+    print('Greedy Best-First Search Solution:')
     print(x)
-    print(len(right_path))
-
+    print("Cost of Solution (steps from initial to goal state): ",len(right_path))
+    print("Number of nodes expanded: ", len(expanded))
 
 def Astar(root_node, array):
     expanded=[]
@@ -427,6 +430,7 @@ def Astar(root_node, array):
                 gg = node_south
     solved_maze = copy.deepcopy(array)
     right_path = gg.get_path()
+    right_path.pop(0)
     for i in right_path:
         solved_maze[i[0]][i[1]] = "#"
     x = ""
@@ -434,25 +438,67 @@ def Astar(root_node, array):
         for j in i:
             x = x + j
         x = x+'\n'
+    print('A* Search Solution:')
     print(x)
-    print(len(right_path))
+    print("Cost of Solution (steps from initial to goal state): ",len(right_path))
+    print("Number of nodes expanded: ", len(expanded))
+
+def single_dfs(file):
+    
+    D_array=read_file(file)
+    DFS(make_first_node(D_array),D_array)
+
+def single_bfs(file):
+    
+    D_array=read_file(file)
+    BFS(make_first_node(D_array),D_array)
+
+def single_gbfs(file):
+    
+    D_array=read_file(file)
+    GBFS(make_first_node(D_array),D_array)
+
+def single_astar(file):
+    
+    D_array=read_file(file)
+    Astar(make_first_node(D_array),D_array)
+
+def multi_astar(file):
+    
+    D_array=read_file(file)
+    Astar(make_first_node(D_array),D_array)
          
-
-
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file")
-    
-
     args=parser.parse_args()
-    D_array = read_file(args.file)
+    file_name= args.file
+
+    print("What search method would you like to use?")
+    num = input ("Enter 1 for single_DFS, 2 for single_BFS, 3 for single_GBFS, 4 for single_A-star, and 5 for multi_A-star:")
+
+
+   
+    if  num=='1':
+        single_dfs(file_name)
+    elif  num=='2':
+        single_bfs(file_name)
+    elif  num=='3':
+        single_gbfs(file_name)
+    elif  num=='4':
+        single_astar(file_name)
+    elif  num=='5':
+        multi_astar(file_name)
+
+    else:
+        print ("Invalid input")
 
     # x =transition(make_first_node(D_array).get_state(), "E", D_array)
     # print(x.get_curr_location())
 
-    # DFS(make_first_node(D_array),D_array)
+    # BFS(make_first_node(D_array),D_array)
     # GBFS(make_first_node(D_array), D_array)
-    Astar(make_first_node(D_array), D_array)
+    #Astar(make_first_node(D_array), D_array)
     # x = make_first_node(D_array)
     # s = x.get_state()
 
